@@ -1,0 +1,121 @@
+<style>
+    #keyframe_wrapper_small {
+        position: relative;
+        width: 120px;
+        height: 90px;
+        top: 0px;
+        left: 400px;
+    }
+    #keyframe_small {
+        z-index: 1;
+        width: 120px;
+        height: 90px;
+    }
+    .face_bounding_box {
+        border: 3px solid yellow;
+        position: absolute;
+        z-index: 2;
+        color: yellow;
+        font-size: 12px;
+    }
+</style>
+
+<div id="keyframe_wrapper_small">
+    <img id="keyframe_small" src="2406770.jpg">
+    <!-- <div id="bounding_box"></div> -->
+</div>
+
+<script src="jquery-1.11.3.min.js"></script>
+<script src="tooltipsy.min.js"></script>
+
+<script>
+function add_bounding_box(id, x, y, w, h)
+{
+    $(id).append("<div class=\"face_bounding_box\" style=\"left: "+x+"; top: "+y+"; width: "+w+"; height: "+h+";\"></div>");
+}
+
+function add_bounding_box_with_number(id, x, y, w, h, num)
+{
+    $(id).append("<div class=\"face_bounding_box\" style=\"position: absolute; left: "+x+"px; top: "+y+"px; width: "+w+"px; height: "+h+"px;\">"+num+"</div>");
+}
+
+
+function add_tooltipsy_with_bounding_box(id, image_src, image_width, image_height, bounding_boxes)
+{
+    var pos = $(id).offset();
+    console.log(pos);
+    var tooltip_top = 0;
+    if (pos.top > image_height)
+        tooltip_top = -10;
+    else
+        tooltip_top = 10;
+    var tooltip_left = 0;
+    if (pos.left > image_width)
+        tooltip_left = -10;
+    else
+        tooltip_left = 10;
+
+    // http://stackoverflow.com/questions/1349404/generate-a-string-of-5-random-characters-in-javascript
+    tooltip_div_name = id.substr(1) + Math.random().toString(36).substr(2, 5);
+    tooltip_div_id = "#" + tooltip_div_name;
+
+    $(id).tooltipsy({
+        offset: [tooltip_left, tooltip_top],
+        css: {
+            'max-width': image_width + "px",
+            'background-color': '#ffffff',
+            'border': '1px solid #deca7e',
+            '-moz-box-shadow': '0 0 10px rgba(0, 0, 0, .5)',
+            '-webkit-box-shadow': '0 0 10px rgba(0, 0, 0, .5)',
+            'box-shadow': '0 0 10px rgba(0, 0, 0, .5)',
+            'text-shadow': 'none'
+        },
+        content: function(el, tip) {
+            var tip_content = "<div id=\""+tooltip_div_name+"\" style=\"width: "+image_width+"px; position: relative;\">";
+            tip_content = tip_content + "<img src=\""+image_src+"\" style=\"width: "+image_width+"px\">";
+            tip_content = tip_content + "</div>";
+            tip_content = tip_content + "<p>Detected face attributes: <br>";
+            for (var box_id in bounding_boxes) 
+            {
+                // tip_content = tip_content + "(1) female: 1.0; white: 1.0; adult: 1.0; no-glasses: 1.0; smile: 1.0;</p>"
+                tip_content = tip_content + "("+box_id+")";
+                var bounding_box = bounding_boxes[box_id];
+                for (var attr_name in bounding_box.attributes)
+                {
+                    var attr_score = bounding_box.attributes[attr_name].toString();
+                    tip_content = tip_content + " " + attr_name + ": " + attr_score + ";";
+                }
+                tip_content = tip_content + "<br>";
+            }
+            tip_content = tip_content + "</p>";
+            tip.html(tip_content);
+            for (var box_id in bounding_boxes)
+            {
+                bounding_box = bounding_boxes[box_id];
+                add_bounding_box_with_number(tooltip_div_id, bounding_box.x, bounding_box.y, bounding_box.w, bounding_box.h, box_id);
+            }
+
+        }   
+    });
+}
+
+var ratio_x = 120 / 320;
+var ratio_y = 90 / 240;
+add_bounding_box("#keyframe_wrapper_small", 158 * ratio_x, 40 * ratio_y, 50 * ratio_x, 50 * ratio_y);
+bounding_box = [
+{
+    x: 158,
+    y: 40,
+    w: 50,
+    h: 50,
+    attributes: {
+        "female": 0.9,
+        "white": 1.0,
+        "adult": 1.0,
+        "no-glasses": 1.0,
+        "smile": 1.0
+    }
+}
+];
+add_tooltipsy_with_bounding_box("#keyframe_wrapper_small", "2406770.jpg", 320, 240, bounding_box)
+</script>
